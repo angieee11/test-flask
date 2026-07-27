@@ -9,12 +9,13 @@ pipeline{
         git branch: 'main', url: 'https://github.com/angieee11/test-flask.git'
       }
     }
-    stage('set up the venv'){
-      steps{
-        sh 'python -m venv %VENV%'
-        sh '%VENV%\\Scripts\\python -m pip install --upgrade pip'
-        sh '%VENV%\\Scripts\\pip install -r requirements.txt'
-      }
+    stage('set up the venv') {
+    steps {
+        sh '''
+            python3 -m venv venv
+            venv/bin/pip install -r requirements.txt
+        '''
+    }
     }
     stage('RUN THE TESTS'){
       steps{
