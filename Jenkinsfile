@@ -17,10 +17,11 @@ pipeline{
         '''
     }
     }
-    stage('RUN THE TESTS'){
-      steps{
-        sh '%VENV%\\Scripts\\python -m unittest discover -s tests'
-      }
+    stage('RUN THE TESTS') {
+    steps {
+        sh 'venv/bin/python -m unittest discover -s tests'
+    }
+    }
     }
   }
 }
