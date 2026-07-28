@@ -22,6 +22,14 @@ pipeline {
             steps {
                 sh 'venv/bin/python -m unittest discover -s tests'
             }
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                    docker build -t angy1133/test-flask:$BUILD_NUMBER .
+                    docker tag angy1133/test-flask:$BUILD_NUMBER angy1133/test-flask:latest
+                    '''
+        }
+            }
         }
     }
 }
