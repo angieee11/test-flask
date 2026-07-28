@@ -25,26 +25,28 @@ pipeline {
         stage('Set up the venv') {
             steps {
                 sh '''
-                    python3 -m venv $VENV
-                    $VENV/bin/pip install -r requirements.txt
+                    python3 -m venv "$VENV"
+                    "$VENV/bin/pip" install -r requirements.txt
                 '''
             }
         }
 
         stage('Run the tests') {
             steps {
-                sh '$VENV/bin/python -m unittest discover -s tests'
+                sh '"$VENV/bin/python" -m unittest discover -s tests'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 sh '''
-                    docker build -t test-flask:$BUILD_NUMBER .
-                    docker tag test-flask:$BUILD_NUMBER \
-                        $ECR_IMAGE:$BUILD_NUMBER
-                    docker tag test-flask:$BUILD_NUMBER \
-                        $ECR_IMAGE:latest
+                    docker build -t "test-flask:$BUILD_NUMBER" .
+
+                    docker tag "test-flask:$BUILD_NUMBER" \
+                        "$ECR_IMAGE:$BUILD_NUMBER"
+
+                    docker tag "test-flask:$BUILD_NUMBER" \
+                        "$ECR_IMAGE:latest"
                 '''
             }
         }
@@ -52,11 +54,10 @@ pipeline {
         stage('Push Image to AWS ECR') {
             steps {
                 withCredentials([
-                    usernamePassword(
-                        credentialsId: "${AWS_CREDENTIALS_ID}",
-                        usernameVariable: 'AWS_ACCESS_KEY_ID',
-                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                    )
+                    [
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: env.AWS_CREDENTIALS_ID
+                    ]
                 ]) {
                     sh '''
                         aws ecr get-login-password \
