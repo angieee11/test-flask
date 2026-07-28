@@ -5,7 +5,7 @@ pipeline {
         VENV = 'venv'
 
         AWS_REGION = 'us-east-1'
-        AWS_ACCOUNT_ID = 'AKIAUBZSF2F6J45AKDXI'
+        AWS_ACCOUNT_ID = 'e89db875-9678-4dd3-9932-779a3c1eb9ec'
         ECR_REPOSITORY = 'test-flask'
 
         AWS_CREDENTIALS_ID = 'aws-credentials'
