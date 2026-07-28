@@ -3,8 +3,15 @@ pipeline {
 
     environment {
         VENV = 'venv'
-        DOCKER_IMAGE = 'angy1133/test-flask'
-        DOCKER_CREDENTIALS = 'dockerhub-credentials'
+
+        AWS_REGION = 'us-east-1'
+        AWS_ACCOUNT_ID = '278741242236'
+        ECR_REPOSITORY = 'test-flask'
+
+        AWS_CREDENTIALS_ID = 'aws-credentials'
+
+        ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        ECR_IMAGE = "${ECR_REGISTRY}/${ECR_REPOSITORY}"
     }
 
     stages {
@@ -33,30 +40,35 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                    docker build -t $DOCKER_IMAGE:$BUILD_NUMBER .
-                    docker tag $DOCKER_IMAGE:$BUILD_NUMBER $DOCKER_IMAGE:latest
+                    docker build -t test-flask:$BUILD_NUMBER .
+                    docker tag test-flask:$BUILD_NUMBER \
+                        $ECR_IMAGE:$BUILD_NUMBER
+                    docker tag test-flask:$BUILD_NUMBER \
+                        $ECR_IMAGE:latest
                 '''
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Push Image to AWS ECR') {
             steps {
                 withCredentials([
                     usernamePassword(
-                        credentialsId: "${DOCKER_CREDENTIALS}",
-                        usernameVariable: 'DOCKER_USERNAME',
-                        passwordVariable: 'DOCKER_PASSWORD'
+                        credentialsId: "${AWS_CREDENTIALS_ID}",
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                     )
                 ]) {
                     sh '''
-                        echo "$DOCKER_PASSWORD" | docker login \
-                            -u "$DOCKER_USERNAME" \
-                            --password-stdin
+                        aws ecr get-login-password \
+                            --region "$AWS_REGION" |
+                        docker login \
+                            --username AWS \
+                            --password-stdin "$ECR_REGISTRY"
 
-                        docker push $DOCKER_IMAGE:$BUILD_NUMBER
-                        docker push $DOCKER_IMAGE:latest
+                        docker push "$ECR_IMAGE:$BUILD_NUMBER"
+                        docker push "$ECR_IMAGE:latest"
 
-                        docker logout
+                        docker logout "$ECR_REGISTRY"
                     '''
                 }
             }
