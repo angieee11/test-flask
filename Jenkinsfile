@@ -4,6 +4,7 @@ pipeline {
     environment {
         VENV = 'venv'
         DOCKER_IMAGE = 'angy1133/test-flask'
+        DOCKER_CREDENTIALS = 'dockerhub-credentials'
     }
 
     stages {
@@ -35,6 +36,29 @@ pipeline {
                     docker build -t $DOCKER_IMAGE:$BUILD_NUMBER .
                     docker tag $DOCKER_IMAGE:$BUILD_NUMBER $DOCKER_IMAGE:latest
                 '''
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: "${DOCKER_CREDENTIALS}",
+                        usernameVariable: 'DOCKER_USERNAME',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )
+                ]) {
+                    sh '''
+                        echo "$DOCKER_PASSWORD" | docker login \
+                            -u "$DOCKER_USERNAME" \
+                            --password-stdin
+
+                        docker push $DOCKER_IMAGE:$BUILD_NUMBER
+                        docker push $DOCKER_IMAGE:latest
+
+                        docker logout
+                    '''
+                }
             }
         }
     }
